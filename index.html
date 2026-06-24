@@ -99,19 +99,35 @@
             </div>
         </div>
 
-        <!-- FIREBASE HANDSHAKE GUIDE (Displays only if rules or anonymous login is disabled) -->
+        <!-- FIREBASE HANDSHAKE GUIDE -->
         <div id="setup-help" class="hidden glass-panel p-6 rounded-2xl max-w-md mx-auto mb-6 border-red-200 bg-red-50/90 text-slate-800">
-            <div class="flex gap-3">
-                <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl mt-1"></i>
-                <div>
-                    <h3 class="font-bold text-red-800 text-lg">Firebase Connection Issue!</h3>
-                    <p class="text-sm text-slate-600 mt-1">Apnar database completely setup korar jonno eiti follow koro:</p>
-                    <ul class="list-decimal list-inside text-xs text-slate-600 mt-2 space-y-1">
-                        <li>Firebase console-e jao.</li>
-                        <li><strong>Authentication > Sign-in method</strong> tab-e click koro.</li>
-                        <li><strong>Anonymous Authentication</strong> provider-ti select kore strictly enable koro.</li>
-                        <li>Save kore app-ti arakbar load/refresh koro.</li>
-                    </ul>
+            <div class="flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-red-800 text-lg">Firebase Connection Issue!</h3>
+                        <p class="text-sm text-slate-600 mt-1">Apnar database completely setup korar jonno eiti follow koro:</p>
+                        <ul class="list-decimal list-inside text-xs text-slate-600 mt-2 space-y-1">
+                            <li>Firebase console-e jao.</li>
+                            <li><strong>Authentication > Sign-in method</strong> tab-e click koro.</li>
+                            <li><strong>Anonymous Authentication</strong> provider-ti select kore strictly enable koro.</li>
+                            <li>Save kore app-ti arakbar load/refresh koro.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Exact Error Visualizer -->
+                <div class="bg-white border border-red-200 rounded-xl p-3 text-xs">
+                    <span class="font-bold text-red-700 block mb-1">Firebase Error details:</span>
+                    <code id="error-log-box" class="block font-mono text-slate-700 whitespace-pre-wrap break-all">No specific error intercepted yet.</code>
+                </div>
+
+                <!-- Bypass Button -->
+                <div class="border-t border-red-200 pt-3 mt-1 text-center">
+                    <p class="text-xs text-slate-500 mb-2">Jodi instantly system test korte chao (offline mode):</p>
+                    <button onclick="activateLocalBypass()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Bypass & Start in Demo Mode
+                    </button>
                 </div>
             </div>
         </div>
@@ -166,7 +182,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-600 mb-1">Take Delivery Proof Photo (Required)</label>
                         <div class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-xl p-4 text-center hover:bg-cyan-50/50 transition cursor-pointer relative">
-                            <!-- Captures environment on back camera of dynamic device and processes canvas compression -->
+                            <!-- Captures environment on back camera and compresses via canvas -->
                             <input type="file" id="delivery-photo" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewImage(event, 'photo-preview', 'photo-placeholder', false)">
                             <div id="photo-placeholder" class="text-slate-500">
                                 <i class="fa-solid fa-camera text-3xl mb-2 text-cyan-600"></i>
@@ -269,6 +285,18 @@
                         </h3>
                         
                         <div class="space-y-3">
+                            <!-- Custom Order ID Section -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">Order ID / Bill Number</label>
+                                <div class="flex gap-2 mt-1">
+                                    <input type="text" id="new-order-id" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-bold uppercase" placeholder="e.g. FSH-101 (Leave blank to auto)">
+                                    <button onclick="fillGeneratedOrderID()" type="button" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 transition">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto
+                                    </button>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-1">Admin can manually input customized shop ID here.</p>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase">Customer Phone</label>
                                 <input type="tel" id="new-mobile" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm" placeholder="10-digit number">
@@ -334,7 +362,7 @@
         import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Hardcoded exact user configuration verified
+        // Real Firebase Credentials matching parameters
         const firebaseConfig = {
             apiKey: "AIzaSyBgIDmXuEXAivYLlEfmOW01D07nuQ4lvyA",
             authDomain: "royal-aqua-delivery.firebaseapp.com",
@@ -345,11 +373,31 @@
             measurementId: "G-J9ZDFC2M74"
         };
 
-        // Strict Standardized Paths Declared
+        // Strict Standardized Paths Declared (Rule 1)
         const PROJECT_APP_ID = "royal-aqua-pro-v1"; 
 
         let app, db, auth, storage;
         let currentUser = null;
+        let isOfflineMode = false;
+
+        // Offline storage container initialized with fallback mock orders
+        let localOrders = [
+            {
+                id: "local-1",
+                orderId: "ORD-FSH888",
+                mobile: "9876543210",
+                items: "2x Premium Blue Betta, 1x Red Dragon Guppy Pair",
+                address: "12/A Gariahat Road, Kolkata",
+                cost: 650,
+                otp: "H888",
+                status: "Pending",
+                createdAt: { toMillis: () => Date.now() }
+            }
+        ];
+        let localProducts = [
+            { id: "local-p1", name: "Premium Blue Betta", price: 250 },
+            { id: "local-p2", name: "Red Dragon Guppy Pair", price: 150 }
+        ];
 
         // Binary references for native host uploads
         window.uploadedBlobs = {
@@ -366,16 +414,20 @@
             authenticateSecurely();
         } catch (error) {
             console.error("Firebase setup crashed:", error);
-            displaySetupBanner();
+            displaySetupBanner("init-failed", error.message);
         }
 
-        // Display Setup help if Anonymous provider fails or connection drops
-        function displaySetupBanner() {
+        // Display Setup help and exact error message
+        function displaySetupBanner(errCode, errMessage) {
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('setup-help').classList.remove('hidden');
+            
+            // Show exact error details
+            document.getElementById('error-log-box').innerText = `Error Code: ${errCode || 'Unknown'}\nMessage: ${errMessage || 'No info'}`;
+            
             const statusEl = document.getElementById('connection-status');
             statusEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-red-50 text-red-700 border border-red-200";
-            statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span> Auth Failed`;
+            statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span> Connection Locked`;
         }
 
         async function authenticateSecurely() {
@@ -393,8 +445,23 @@
                 initApplicationFramework();
             } catch (error) {
                 console.error("Authentication handshake crashed:", error);
-                displaySetupBanner();
+                displaySetupBanner(error.code, error.message);
             }
+        }
+
+        // Direct Offline Bypass Trigger
+        window.activateLocalBypass = function() {
+            isOfflineMode = true;
+            document.getElementById('setup-help').classList.add('hidden');
+            document.getElementById('loader').classList.add('hidden');
+            
+            // Connection Approved in Local Mode
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-amber-50 text-amber-700 border border-amber-200";
+            statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse inline-flex"></span> Offline Demo Mode`;
+            
+            showToast("Bypassed to local memory storage successfully!", "success");
+            initApplicationFramework();
         }
 
         // Strict Compliant Path Helpers (Rule 1)
@@ -425,9 +492,15 @@
             return result;
         };
 
+        window.fillGeneratedOrderID = function() {
+            document.getElementById('new-order-id').value = window.generateOrderID();
+        };
+
         function initApplicationFramework() {
             document.getElementById('loader').classList.add('hidden');
-            listenToLogoSettingsChanges();
+            if (!isOfflineMode) {
+                listenToLogoSettingsChanges();
+            }
             window.addEventListener('hashchange', applicationRouter);
             applicationRouter();
         }
@@ -498,6 +571,9 @@
 
         // Binary direct stream to cloud storage
         async function uploadFileToCloudStorage(blobData, prefix) {
+            if (isOfflineMode) {
+                return "https://placehold.co/600x400/0ea5e9/ffffff?text=Offline+Delivery+Proof";
+            }
             if (!blobData || !blobData.blob) return null;
             const filename = `${prefix}_${Date.now()}.${blobData.extension}`;
             const refStorage = getStorageReference(filename);
@@ -528,7 +604,7 @@
             if (!window.uploadedBlobs.adminLogo) {
                 return showToast("Select an image first", "error");
             }
-            if (!auth.currentUser) return;
+            if (!isOfflineMode && !auth.currentUser) return;
 
             const btn = document.getElementById('btn-upload-logo');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Storage...';
@@ -536,10 +612,18 @@
             try {
                 const url = await uploadFileToCloudStorage(window.uploadedBlobs.adminLogo, "logo");
                 if (url) {
-                    await setDoc(getDocPath('settings', 'logo'), { 
-                        url: url, 
-                        updatedAt: serverTimestamp() 
-                    });
+                    if (!isOfflineMode) {
+                        await setDoc(getDocPath('settings', 'logo'), { 
+                            url: url, 
+                            updatedAt: serverTimestamp() 
+                        });
+                    } else {
+                        const defIcon = document.getElementById('default-logo-icon');
+                        const customImg = document.getElementById('custom-logo-img');
+                        customImg.src = url;
+                        customImg.classList.remove('hidden');
+                        defIcon.classList.add('hidden');
+                    }
                     showToast("Logo updated successfully!", "success");
                 }
             } catch (e) {
@@ -553,17 +637,25 @@
         let currentProducts = [];
 
         window.addProduct = async function() {
-            if (!auth.currentUser) return;
+            if (!isOfflineMode && !auth.currentUser) return;
             const name = document.getElementById('prod-name').value.trim();
             const price = document.getElementById('prod-price').value.trim();
             if (!name || !price) return showToast("Enter variety name and price", "error");
 
             try {
-                await addDoc(getCollectionPath('products'), { 
-                    name, 
-                    price: Number(price), 
-                    createdAt: serverTimestamp() 
-                });
+                if (!isOfflineMode) {
+                    await addDoc(getCollectionPath('products'), { 
+                        name, 
+                        price: Number(price), 
+                        createdAt: serverTimestamp() 
+                    });
+                } else {
+                    localProducts.push({
+                        id: "local-p-" + Date.now(),
+                        name,
+                        price: Number(price)
+                    });
+                }
                 document.getElementById('prod-name').value = '';
                 document.getElementById('prod-price').value = '';
                 showToast("Variety added successfully", "success");
@@ -575,9 +667,13 @@
         };
 
         window.deleteProduct = async function(id) {
-            if (!auth.currentUser) return;
+            if (!isOfflineMode && !auth.currentUser) return;
             try {
-                await deleteDoc(getDocPath('products', id));
+                if (!isOfflineMode) {
+                    await deleteDoc(getDocPath('products', id));
+                } else {
+                    localProducts = localProducts.filter(p => p.id !== id);
+                }
                 showToast("Variety removed", "success");
                 loadAdminData();
             } catch(e) {
@@ -600,7 +696,8 @@
         window.calculateOrderBillingTotal = calculateOrderBillingTotal;
 
         window.createOrder = async function() {
-            if (!auth.currentUser) return;
+            if (!isOfflineMode && !auth.currentUser) return;
+            let orderId = document.getElementById('new-order-id').value.trim().toUpperCase();
             const mobile = document.getElementById('new-mobile').value.trim();
             const items = document.getElementById('new-items').value.trim();
             const address = document.getElementById('new-address').value.trim();
@@ -611,26 +708,46 @@
                 return showToast("Fill all order fields", "error");
             }
 
-            const orderId = generateOrderID();
-            if (!otp) otp = orderId.slice(-4); 
+            // Fallback to auto-generated orderId if admin left it blank
+            if (!orderId) {
+                orderId = window.generateOrderID();
+            }
+            if (!otp) {
+                otp = orderId.slice(-4); 
+            }
 
             const btn = document.getElementById('btn-create-order');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Writing assignment...';
 
             try {
-                await addDoc(getCollectionPath('orders'), {
-                    orderId, 
-                    mobile, 
-                    items, 
-                    address, 
-                    cost: Number(cost), 
-                    otp, 
-                    status: 'Pending', 
-                    createdAt: serverTimestamp()
-                });
+                if (!isOfflineMode) {
+                    await addDoc(getCollectionPath('orders'), {
+                        orderId, 
+                        mobile, 
+                        items, 
+                        address, 
+                        cost: Number(cost), 
+                        otp, 
+                        status: 'Pending', 
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    localOrders.push({
+                        id: "local-ord-" + Date.now(),
+                        orderId,
+                        mobile,
+                        items,
+                        address,
+                        cost: Number(cost),
+                        otp,
+                        status: 'Pending',
+                        createdAt: { toMillis: () => Date.now() }
+                    });
+                }
                 showToast(`Order ${orderId} saved to database!`, "success");
                 
                 // Reset Fields
+                document.getElementById('new-order-id').value = '';
                 document.getElementById('new-mobile').value = '';
                 document.getElementById('new-items').value = '';
                 document.getElementById('new-address').value = '';
@@ -650,7 +767,7 @@
         let currentActiveOrder = null;
 
         window.searchOrder = async function() {
-            if (!auth.currentUser) return showToast("Checking cloud authentication...", "info");
+            if (!isOfflineMode && !auth.currentUser) return showToast("Checking cloud authentication...", "info");
             const mobile = document.getElementById('search-mobile').value.trim();
             if (!mobile || mobile.length < 10) return showToast("Enter correct 10-digit number", "error");
 
@@ -658,14 +775,18 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Locating Order...';
             
             try {
-                const snapshot = await getDocs(getCollectionPath('orders'));
                 let found = null;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.mobile === mobile && data.status === 'Pending') {
-                        found = { id: doc.id, ...data };
-                    }
-                });
+                if (!isOfflineMode) {
+                    const snapshot = await getDocs(getCollectionPath('orders'));
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.mobile === mobile && data.status === 'Pending') {
+                            found = { id: doc.id, ...data };
+                        }
+                    });
+                } else {
+                    found = localOrders.find(o => o.mobile === mobile && o.status === 'Pending') || null;
+                }
 
                 if (found) {
                     currentActiveOrder = found;
@@ -702,10 +823,10 @@
         };
 
         window.confirmDelivery = async function() {
-            if (!currentActiveOrder || !auth.currentUser) return;
+            if (!currentActiveOrder || (!isOfflineMode && !auth.currentUser)) return;
             const inputOtp = document.getElementById('verify-otp').value.trim().toUpperCase();
             if (!inputOtp) return showToast("Verification key is required", "error");
-            if (!window.uploadedBlobs.deliveryProof) return showToast("Take snapshot delivery proof photo first", "error");
+            if (!window.uploadedBlobs.deliveryProof && !isOfflineMode) return showToast("Take snapshot delivery proof photo first", "error");
 
             const last4Digits = currentActiveOrder.orderId.slice(-4).toUpperCase();
             const correctOtp = currentActiveOrder.otp ? currentActiveOrder.otp.toUpperCase() : last4Digits;
@@ -723,12 +844,21 @@
                 const proofUrl = await uploadFileToCloudStorage(window.uploadedBlobs.deliveryProof, "delivery");
                 
                 if (proofUrl) {
-                    // Update Firestore Status with Direct Storage URL Reference
-                    await updateDoc(getDocPath('orders', currentActiveOrder.id), {
-                        status: 'Delivered',
-                        deliveryPhotoUrl: proofUrl,
-                        deliveredAt: serverTimestamp()
-                    });
+                    if (!isOfflineMode) {
+                        // Update Firestore Status with Direct Storage URL Reference
+                        await updateDoc(getDocPath('orders', currentActiveOrder.id), {
+                            status: 'Delivered',
+                            deliveryPhotoUrl: proofUrl,
+                            deliveredAt: serverTimestamp()
+                        });
+                    } else {
+                        const target = localOrders.find(o => o.id === currentActiveOrder.id);
+                        if (target) {
+                            target.status = 'Delivered';
+                            target.deliveryPhotoUrl = proofUrl;
+                            target.deliveredAt = { toMillis: () => Date.now() };
+                        }
+                    }
 
                     showToast("Delivery verified and logged securely!", "success");
                     document.getElementById('delivery-step-2').classList.add('hidden');
@@ -771,7 +901,7 @@
         };
 
         window.loadAdminData = async function() {
-            if (!auth.currentUser) return;
+            if (!isOfflineMode && !auth.currentUser) return;
             
             // Load Products List
             const pCont = document.getElementById('admin-products-list');
@@ -779,9 +909,14 @@
             pCont.innerHTML = '<p class="text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> Syncing Stock...</p>';
             
             try {
-                const pSnap = await getDocs(getCollectionPath('products'));
-                currentProducts = [];
-                pSnap.forEach(docSnap => currentProducts.push({ id: docSnap.id, ...docSnap.data() }));
+                let productsList = [];
+                if (!isOfflineMode) {
+                    const pSnap = await getDocs(getCollectionPath('products'));
+                    pSnap.forEach(docSnap => productsList.push({ id: docSnap.id, ...docSnap.data() }));
+                } else {
+                    productsList = localProducts;
+                }
+                currentProducts = productsList;
                 
                 if (currentProducts.length === 0) {
                     pCont.innerHTML = '<p class="text-xs text-slate-400">Empty list.</p>';
@@ -811,15 +946,21 @@
             oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-10"><i class="fa-solid fa-spinner fa-spin"></i> Syncing Logs...</p>';
             
             try {
-                const oSnap = await getDocs(getCollectionPath('orders'));
                 let orders = [];
-                oSnap.forEach(docSnap => orders.push({ id: docSnap.id, ...docSnap.data() }));
+                if (!isOfflineMode) {
+                    const oSnap = await getDocs(getCollectionPath('orders'));
+                    oSnap.forEach(docSnap => orders.push({ id: docSnap.id, ...docSnap.data() }));
+                } else {
+                    orders = localOrders;
+                }
                 
                 // Sorting: pending first, then newest
                 orders.sort((a, b) => {
                     if (a.status === 'Pending' && b.status === 'Delivered') return -1;
                     if (a.status === 'Delivered' && b.status === 'Pending') return 1;
-                    return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+                    const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                    const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                    return bTime - aTime;
                 });
 
                 if (orders.length === 0) {
