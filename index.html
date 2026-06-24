@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Royal Aqua Fishes - Delivery Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0fdfa;
+            background-color: #f0fdfa; /* Light aqua/teal tone */
             margin: 0;
             padding: 0;
             color: #1e293b;
@@ -19,10 +19,12 @@
         .glass-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.7);
         }
         .hidden { display: none !important; }
         
+        /* Custom Input styling for smartphone cameras */
         input[type="file"]::file-selector-button {
             border: none;
             background: #0ea5e9;
@@ -34,124 +36,162 @@
             margin-right: 10px;
             font-weight: 500;
         }
-        input[type="file"]::file-selector-button:hover { background: #0284c7; }
+        input[type="file"]::file-selector-button:hover {
+            background: #0284c7;
+        }
 
+        /* Interactive Toast Message Container */
         #toast-container {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 50;
+            z-index: 100;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            width: 90%;
+            max-width: 400px;
         }
         .toast {
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 12px;
             color: white;
             font-weight: 500;
             opacity: 0;
             transform: translateY(20px);
             animation: slideUp 0.3s forwards;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         .toast.success { background-color: #10b981; }
         .toast.error { background-color: #ef4444; }
         .toast.info { background-color: #3b82f6; }
         
-        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col items-center p-4 sm:p-6">
 
+    <!-- Toast Notification Container -->
     <div id="toast-container"></div>
 
-    <div class="w-full max-w-4xl mx-auto relative mt-2 sm:mt-10">
+    <!-- Main App Container -->
+    <div class="w-full max-w-4xl mx-auto relative mt-2 sm:mt-6">
         
-        <!-- Header with Dynamic Logo -->
+        <!-- Header Section -->
         <div class="text-center mb-6">
             <div id="logo-container" class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-cyan-100 text-cyan-600 mb-3 shadow-inner overflow-hidden border-2 border-white">
                 <i id="default-logo-icon" class="fa-solid fa-fish-fins text-4xl"></i>
                 <img id="custom-logo-img" class="hidden w-full h-full object-cover" alt="Royal Aqua Logo">
             </div>
-            <h1 class="text-2xl font-bold text-slate-800">Royal Aqua Fishes</h1>
-            <p id="page-subtitle" class="text-slate-500 font-medium mt-1">Delivery Portal</p>
-            <div id="connection-status" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-amber-50 text-amber-700 border border-amber-200">
-                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting to Cloud...
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Royal Aqua Fishes</h1>
+            <p id="page-subtitle" class="text-cyan-700 font-semibold mt-1">Delivery Portal</p>
+            <div id="connection-status" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-slate-100 text-slate-500 border border-slate-200 transition-all duration-300">
+                <span class="h-2 w-2 rounded-full bg-slate-300 animate-pulse"></span> Connecting to database...
             </div>
         </div>
 
-        <!-- LOADING SPINNER -->
-        <div id="loader" class="flex flex-col items-center justify-center py-10 glass-panel rounded-2xl max-w-md mx-auto">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mb-4"></div>
-            <p class="text-slate-500 font-medium">Authenticating Securely...</p>
+        <!-- FIREBASE HANDSHAKE GUIDE (Displays only if rules or anonymous login is disabled) -->
+        <div id="setup-help" class="hidden glass-panel p-6 rounded-2xl max-w-md mx-auto mb-6 border-red-200 bg-red-50/90 text-slate-800">
+            <div class="flex gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl mt-1"></i>
+                <div>
+                    <h3 class="font-bold text-red-800 text-lg">Firebase Connection Issue!</h3>
+                    <p class="text-sm text-slate-600 mt-1">Apnar database completely setup korar jonno eiti follow koro:</p>
+                    <ul class="list-decimal list-inside text-xs text-slate-600 mt-2 space-y-1">
+                        <li>Firebase console-e jao.</li>
+                        <li><strong>Authentication > Sign-in method</strong> tab-e click koro.</li>
+                        <li><strong>Anonymous Authentication</strong> provider-ti select kore strictly enable koro.</li>
+                        <li>Save kore app-ti arakbar load/refresh koro.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
-        <!-- ================= DELIVERY PORTAL VIEW ================= -->
+        <!-- INITIAL APPLICATION SPINNER -->
+        <div id="loader" class="flex flex-col items-center justify-center py-12 glass-panel rounded-2xl max-w-md mx-auto">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mb-4"></div>
+            <p class="text-slate-500 font-medium">Authenticating secure server handshake...</p>
+        </div>
+
+        <!-- ================= DELIVERY PORTAL MAIN VIEW ================= -->
         <div id="view-delivery" class="hidden w-full max-w-md mx-auto">
             
-            <div id="delivery-step-1" class="glass-panel p-6 rounded-2xl">
-                <h2 class="text-lg font-semibold mb-4 text-slate-700">Find Order</h2>
+            <!-- Step 1: Mobile Number Search -->
+            <div id="delivery-step-1" class="glass-panel p-6 rounded-2xl shadow-lg border border-slate-100">
+                <h2 class="text-lg font-bold mb-4 text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-search text-cyan-600"></i> Search Pending Order
+                </h2>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Customer Mobile No.</label>
-                    <input type="tel" id="search-mobile" placeholder="Enter 10-digit mobile number" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition shadow-sm font-medium">
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Customer Mobile Number</label>
+                    <input type="tel" id="search-mobile" placeholder="Enter 10-digit mobile number" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition shadow-sm font-semibold tracking-wider text-slate-700">
                 </div>
                 <button onclick="searchOrder()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                     <span>Search Order</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
 
-            <div id="delivery-step-2" class="hidden glass-panel p-6 rounded-2xl">
-                <button onclick="backToSearch()" class="text-cyan-600 text-sm font-medium mb-4 flex items-center gap-1 hover:text-cyan-800">
-                    <i class="fa-solid fa-arrow-left"></i> Back
+            <!-- Step 2: Order Details & OTP Handshake Verification -->
+            <div id="delivery-step-2" class="hidden glass-panel p-6 rounded-2xl shadow-lg">
+                <button onclick="backToSearch()" class="text-cyan-600 text-sm font-medium mb-4 flex items-center gap-1 hover:text-cyan-800 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Back to search
                 </button>
                 
-                <h2 class="text-lg font-semibold mb-4 text-slate-700 border-b pb-2">Order Details</h2>
+                <h2 class="text-lg font-bold mb-4 text-slate-700 border-b pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice text-cyan-600"></i> Delivery Verification
+                </h2>
                 
                 <div class="bg-slate-50 p-4 rounded-xl mb-5 text-sm space-y-2 border border-slate-100 shadow-inner">
                     <p><span class="font-semibold text-slate-500">Order ID:</span> <span id="lbl-order-id" class="font-bold text-slate-800"></span></p>
-                    <p><span class="font-semibold text-slate-500">Items:</span> <span id="lbl-items" class="text-slate-800"></span></p>
-                    <p><span class="font-semibold text-slate-500">Address:</span> <span id="lbl-address" class="text-slate-800"></span></p>
-                    <p><span class="font-semibold text-slate-500">Amount:</span> <span id="lbl-amount" class="text-slate-800 font-bold text-green-600"></span></p>
+                    <p><span class="font-semibold text-slate-500">Items Ordered:</span> <span id="lbl-items" class="text-slate-800 font-medium"></span></p>
+                    <p><span class="font-semibold text-slate-500">Address:</span> <span id="lbl-address" class="text-slate-800 font-medium"></span></p>
+                    <p><span class="font-semibold text-slate-500">Total Amount:</span> <span id="lbl-amount" class="text-slate-800 font-extrabold text-green-600"></span></p>
                 </div>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-600 mb-1">Verification OTP / Last 4 of Order ID</label>
-                        <input type="text" id="verify-otp" placeholder="e.g. 12BA" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 uppercase font-mono tracking-widest text-center text-lg">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Enter Customer OTP (Or Security Key)</label>
+                        <input type="text" id="verify-otp" placeholder="e.g. F888" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 uppercase font-mono tracking-widest text-center text-lg text-slate-800 font-bold">
+                        <p class="text-xs text-slate-400 mt-1">Security key must match to prevent fraud.</p>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-600 mb-1">Delivery Proof (Photo)</label>
-                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
-                            <input type="file" id="delivery-photo" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewImage(event, 'photo-preview', 'photo-placeholder')">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Take Delivery Proof Photo (Required)</label>
+                        <div class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-xl p-4 text-center hover:bg-cyan-50/50 transition cursor-pointer relative">
+                            <!-- Captures environment on back camera of dynamic device and processes canvas compression -->
+                            <input type="file" id="delivery-photo" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewImage(event, 'photo-preview', 'photo-placeholder', false)">
                             <div id="photo-placeholder" class="text-slate-500">
-                                <i class="fa-solid fa-camera text-2xl mb-2"></i>
-                                <p class="text-sm">Tap to take a photo or upload</p>
+                                <i class="fa-solid fa-camera text-3xl mb-2 text-cyan-600"></i>
+                                <p class="text-sm font-medium">Click to capture packet handoff photo</p>
+                                <p class="text-xs text-slate-400 mt-1">Directly uses mobile camera</p>
                             </div>
-                            <img id="photo-preview" class="hidden max-h-32 mx-auto rounded-lg shadow-sm" alt="Preview"/>
+                            <img id="photo-preview" class="hidden max-h-40 mx-auto rounded-lg shadow border" alt="Preview"/>
                         </div>
                     </div>
 
-                    <button id="btn-confirm-delivery" onclick="confirmDelivery()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition shadow-md mt-4 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-check-circle"></i> <span>Confirm Delivery</span>
+                    <button id="btn-confirm-delivery" onclick="confirmDelivery()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition shadow-lg mt-4 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-lg"></i> <span>Save & Upload Status</span>
                     </button>
                 </div>
             </div>
             
-            <div id="delivery-step-3" class="hidden glass-panel p-8 rounded-2xl text-center">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-500 mb-4">
-                    <i class="fa-solid fa-check text-4xl"></i>
+            <!-- Step 3: Success Screen -->
+            <div id="delivery-step-3" class="hidden glass-panel p-8 rounded-2xl text-center shadow-lg border border-slate-100">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-500 mb-4 animate-bounce">
+                    <i class="fa-solid fa-circle-check text-5xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Delivery Successful!</h2>
-                <p class="text-slate-500 mb-6">The order has been saved to the Cloud Storage.</p>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Delivery Completed Successfully!</h2>
+                <p class="text-slate-500 mb-6">Delivery status updated in cloud database with uploaded image validation proof.</p>
                 <button onclick="backToSearch()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition shadow-md">
-                    Deliver Another Order
+                    Deliver Next Order
                 </button>
             </div>
         </div>
@@ -159,106 +199,126 @@
         <!-- ================= ADMIN PORTAL VIEW ================= -->
         <div id="view-admin" class="hidden w-full max-w-5xl mx-auto">
             
-            <div id="admin-login" class="glass-panel p-6 rounded-2xl max-w-md mx-auto">
+            <!-- Admin Lock Screen -->
+            <div id="admin-login" class="glass-panel p-6 rounded-2xl max-w-md mx-auto shadow-lg border border-slate-100">
                 <div class="text-center mb-6">
-                    <i class="fa-solid fa-user-shield text-4xl text-slate-700 mb-2"></i>
-                    <h2 class="text-xl font-bold text-slate-800">Admin Authentication</h2>
+                    <i class="fa-solid fa-shield-halved text-5xl text-slate-700 mb-2"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Master Access Panel</h2>
+                    <p class="text-sm text-slate-400 font-medium">Authorized operators only</p>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-600 mb-1">Passcode</label>
-                    <input type="password" id="admin-pass" placeholder="Enter Admin Passcode" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-700 text-center tracking-widest font-mono">
+                    <input type="password" id="admin-pass" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-700 text-center tracking-widest font-mono text-lg">
                 </div>
                 <button onclick="loginAdmin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition shadow-md">
-                    Access Admin Panel
+                    Unlock Database
                 </button>
             </div>
 
+            <!-- Dashboard Controls -->
             <div id="admin-dashboard" class="hidden">
-                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
-                    <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-gauge-high mr-2 text-cyan-600"></i>Dashboard</h2>
-                    <button onclick="logoutAdmin()" class="text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-medium transition">Logout</button>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="p-2 bg-cyan-100 rounded-lg text-cyan-600"><i class="fa-solid fa-gears text-xl"></i></span>
+                        <h2 class="text-xl font-bold text-slate-800">Royal Aqua - Administration Console</h2>
+                    </div>
+                    <button onclick="logoutAdmin()" class="w-full sm:w-auto text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-sign-out-alt"></i> Logout Dashboard
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
-                    <!-- Left Column: Products & Settings -->
+                    <!-- Left Column: Settings and Inventory Products list -->
                     <div class="space-y-6">
-                        <!-- Settings: Logo -->
-                        <div class="glass-panel p-5 rounded-2xl">
-                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2"><i class="fa-solid fa-image mr-2"></i>Logo Settings</h3>
-                            <div class="text-sm text-slate-600 mb-3">Upload a new shop logo to Cloud Storage.</div>
-                            <input type="file" id="logo-upload" accept="image/*" class="w-full text-sm mb-3" onchange="previewImage(event, 'logo-admin-preview', null, true)">
-                            <img id="logo-admin-preview" class="hidden max-h-20 mb-3 rounded shadow-sm">
-                            <button id="btn-upload-logo" onclick="uploadLogo()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold py-2 rounded-lg transition text-sm">
-                                Update Logo
+                        <!-- Custom Logo Settings -->
+                        <div class="glass-panel p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-user text-cyan-600"></i> Dynamic Shop Logo
+                            </h3>
+                            <div class="text-xs text-slate-500 mb-3">Upload custom shop logo. It dynamically changes everywhere instantly.</div>
+                            <input type="file" id="logo-upload" accept="image/*" class="w-full text-xs mb-3" onchange="previewImage(event, 'logo-admin-preview', null, true)">
+                            <img id="logo-admin-preview" class="hidden max-h-20 mb-3 rounded shadow-sm border mx-auto">
+                            <button id="btn-upload-logo" onclick="uploadLogo()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold py-2 rounded-lg transition text-sm flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Dynamic Logo
                             </button>
                         </div>
 
-                        <!-- Product Management -->
-                        <div class="glass-panel p-5 rounded-2xl">
-                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2"><i class="fa-solid fa-fish mr-2"></i>Products</h3>
+                        <!-- Product Stocking List -->
+                        <div class="glass-panel p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-tags text-cyan-600"></i> Stock Varieties
+                            </h3>
                             <div class="flex gap-2 mb-3">
-                                <input type="text" id="prod-name" placeholder="Fish Name" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
-                                <input type="number" id="prod-price" placeholder="₹ Price" class="w-24 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
+                                <input type="text" id="prod-name" placeholder="Variety Name" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
+                                <input type="number" id="prod-price" placeholder="Price ₹" class="w-20 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
                             </div>
-                            <button onclick="addProduct()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 rounded-lg transition text-sm mb-4">
-                                Add Product
+                            <button onclick="addProduct()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 rounded-lg transition text-sm flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Add Fish Variety
                             </button>
-                            <div id="admin-products-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                <p class="text-xs text-slate-400">Loading products...</p>
+                            <div id="admin-products-list" class="space-y-2 mt-4 max-h-48 overflow-y-auto pr-1">
+                                <p class="text-xs text-slate-400">Loading dynamic products...</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Middle Column: Create Order -->
-                    <div class="glass-panel p-6 rounded-2xl">
-                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle mr-2"></i>Create New Order</h3>
+                    <!-- Middle Column: Order Generation -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-folder-plus text-cyan-600"></i> Generate Order
+                        </h3>
                         
                         <div class="space-y-3">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase">Customer Mobile</label>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">Customer Phone</label>
                                 <input type="tel" id="new-mobile" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm" placeholder="10-digit number">
                             </div>
                             
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Select Products</label>
-                                <div id="order-product-selection" class="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-sm">
-                                    <p class="text-xs text-slate-400">Loading products...</p>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Select Fish Stock</label>
+                                <div id="order-product-selection" class="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-36 overflow-y-auto space-y-2 text-sm shadow-inner">
+                                    <p class="text-xs text-slate-400">No stocked variety loaded.</p>
                                 </div>
                             </div>
-                            <div class="text-xs text-slate-500">Or type custom items:</div>
-                            <input type="text" id="new-items" placeholder="e.g. 1x Custom Tank" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
                             
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase">Delivery Address</label>
-                                <textarea id="new-address" rows="2" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"></textarea>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">Other Items / Custom Text</label>
+                                <input type="text" id="new-items" placeholder="e.g. 1x Aquarium Tank, Food Box" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">Delivery Dropoff Address</label>
+                                <textarea id="new-address" rows="2" placeholder="Customer address landmark details..." class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"></textarea>
                             </div>
                             
                             <div class="flex gap-3">
                                 <div class="flex-1">
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase">Total Cost (₹)</label>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase">Total Bill (₹)</label>
                                     <input type="number" id="new-cost" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-bold text-green-600">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase">Custom OTP</label>
-                                    <input type="text" id="new-otp" placeholder="(Auto if blank)" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-mono uppercase">
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase">Custom Security OTP</label>
+                                    <input type="text" id="new-otp" placeholder="Auto if blank" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-mono uppercase tracking-widest text-slate-700">
                                 </div>
                             </div>
-                            <button id="btn-create-order" onclick="createOrder()" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-lg transition shadow-md">
-                                Generate Order
+                            
+                            <button id="btn-create-order" onclick="createOrder()" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg transition shadow-md flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-file-invoice"></i> Save Order Assignment
                             </button>
                         </div>
                     </div>
 
-                    <!-- Right Column: Orders List -->
-                    <div class="glass-panel p-6 rounded-2xl flex flex-col">
+                    <!-- Right Column: Real-Time Live Activity Tracker -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                         <div class="flex justify-between items-center mb-4 border-b pb-2">
-                            <h3 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-list mr-2"></i>Active Orders</h3>
-                            <button onclick="loadAdminData()" class="text-cyan-600 hover:text-cyan-800 bg-cyan-50 p-2 rounded-lg"><i class="fa-solid fa-rotate-right"></i></button>
+                            <h3 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-receipt text-cyan-600"></i> Track Delivery Logs
+                            </h3>
+                            <button onclick="loadAdminData()" class="text-cyan-600 hover:text-cyan-800 bg-cyan-50 p-2 rounded-lg transition duration-200"><i class="fa-solid fa-arrows-rotate"></i></button>
                         </div>
                         
                         <div id="admin-orders-list" class="flex-1 overflow-y-auto max-h-[500px] space-y-3 pr-2">
-                            <p class="text-slate-400 text-center text-sm mt-10">Loading orders...</p>
+                            <p class="text-slate-400 text-center text-sm mt-10">Checking cloud logs...</p>
                         </div>
                     </div>
                 </div>
@@ -267,75 +327,87 @@
 
     </div>
 
+    <!-- FIREBASE AND CORE LOGICAL INLINE SYSTEMS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Required paths based on user prompt
+        // Hardcoded exact user configuration verified
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgIDmXuEXAivYLlEfmOW01D07nuQ4lvyA",
+            authDomain: "royal-aqua-delivery.firebaseapp.com",
+            projectId: "royal-aqua-delivery",
+            storageBucket: "royal-aqua-delivery.firebasestorage.app",
+            messagingSenderId: "1010781208302",
+            appId: "1:1010781208302:web:ccd3e70563849aba1a3dff",
+            measurementId: "G-J9ZDFC2M74"
+        };
+
+        // Strict Standardized Paths Declared
         const PROJECT_APP_ID = "royal-aqua-pro-v1"; 
 
         let app, db, auth, storage;
         let currentUser = null;
 
+        // Binary references for native host uploads
         window.uploadedBlobs = {
             deliveryProof: null,
             adminLogo: null
         };
 
-        // Initialize App
+        // Initialize Firebase
         try {
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-            if (firebaseConfig) {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                storage = getStorage(app);
-                authenticateFirebase();
-            } else {
-                showToast("Fatal Error: Firebase Config missing from environment.", "error");
-                document.getElementById('loader').innerHTML = "<p class='text-red-500'>Missing Config</p>";
-            }
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            storage = getStorage(app);
+            authenticateSecurely();
         } catch (error) {
-            console.error("Firebase initialization error:", error);
-            showToast("Initialization Error", "error");
+            console.error("Firebase setup crashed:", error);
+            displaySetupBanner();
         }
 
-        async function authenticateFirebase() {
+        // Display Setup help if Anonymous provider fails or connection drops
+        function displaySetupBanner() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('setup-help').classList.remove('hidden');
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-red-50 text-red-700 border border-red-200";
+            statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span> Auth Failed`;
+        }
+
+        async function authenticateSecurely() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const userCredential = await signInWithCustomToken(auth, __initial_auth_token);
-                    currentUser = userCredential.user;
-                } else {
-                    const userCredential = await signInAnonymously(auth);
-                    currentUser = userCredential.user;
-                }
-                console.log("Authenticated as:", currentUser.uid);
+                // Rule 3: Auth first, then queries
+                const userCredential = await signInAnonymously(auth);
+                currentUser = userCredential.user;
+                console.log("Logged in securely as Anonymous ID:", currentUser.uid);
                 
-                // Update UI status
+                // Connection Approved
                 const statusEl = document.getElementById('connection-status');
                 statusEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200";
-                statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 opacity-75"></span> Cloud Active`;
+                statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse inline-flex"></span> Database Online`;
                 
-                initApp();
+                initApplicationFramework();
             } catch (error) {
-                console.error("Firebase Auth Error:", error);
-                document.getElementById('loader').innerHTML = `<p class='text-red-500'>Auth Failed. Please enable Anonymous login in Console.</p><p class="text-xs mt-2 text-slate-500">${error.message}</p>`;
+                console.error("Authentication handshake crashed:", error);
+                displaySetupBanner();
             }
         }
 
-        // Path Generators (Strict adherence to prompt)
+        // Strict Compliant Path Helpers (Rule 1)
         const getCollectionPath = (colName) => collection(db, 'artifacts', PROJECT_APP_ID, 'public', 'data', colName);
         const getDocPath = (colName, docId) => doc(db, 'artifacts', PROJECT_APP_ID, 'public', 'data', colName, docId);
-        const getStoragePath = (fileName) => ref(storage, `/artifacts/${PROJECT_APP_ID}/images/${fileName}`);
+        const getStorageReference = (fileName) => ref(storage, `/artifacts/${PROJECT_APP_ID}/images/${fileName}`);
 
         window.showToast = function(message, type = 'info') {
             const container = document.getElementById('toast-container');
             if(!container) return;
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            let icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            let icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
             toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => {
@@ -347,18 +419,21 @@
         window.generateOrderID = function() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let result = 'ORD-';
-            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
             return result;
         };
 
-        function initApp() {
+        function initApplicationFramework() {
             document.getElementById('loader').classList.add('hidden');
-            listenToLogoSettings();
-            window.addEventListener('hashchange', router);
-            router();
+            listenToLogoSettingsChanges();
+            window.addEventListener('hashchange', applicationRouter);
+            applicationRouter();
         }
 
-        function router() {
+        // Routing engine
+        function applicationRouter() {
             const hash = window.location.hash;
             document.getElementById('view-delivery').classList.add('hidden');
             document.getElementById('view-admin').classList.add('hidden');
@@ -367,7 +442,7 @@
             if (hash === '#raf-admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('page-subtitle').innerText = "Admin Portal";
-                if(sessionStorage.getItem('raf_admin_auth') === 'true') {
+                if (sessionStorage.getItem('raf_admin_auth') === 'true') {
                     showAdminDashboard();
                 } else {
                     document.getElementById('admin-login').classList.remove('hidden');
@@ -381,7 +456,7 @@
 
         window.previewImage = function(event, previewId, placeholderId, isAdminLogo = false) {
             const file = event.target.files[0];
-            if(!file) return;
+            if (!file) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -389,109 +464,129 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 800; // Compress image
+                    
+                    // Native HTML canvas compression to reduce direct payload limits
+                    const MAX_WIDTH = 800; 
                     let scaleSize = 1;
-                    if(img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+                    if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
                     
                     canvas.width = img.width * scaleSize;
                     canvas.height = img.height * scaleSize;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // Generate Blob for Cloud Storage
+                    // Convert to raw binary blob instead of JSON base64 strings
                     canvas.toBlob((blob) => {
-                        if(isAdminLogo) {
-                            window.uploadedBlobs.adminLogo = { blob, extension: file.name.split('.').pop() };
+                        const fileExt = file.name.split('.').pop();
+                        if (isAdminLogo) {
+                            window.uploadedBlobs.adminLogo = { blob, extension: fileExt };
                         } else {
-                            window.uploadedBlobs.deliveryProof = { blob, extension: file.name.split('.').pop() };
+                            window.uploadedBlobs.deliveryProof = { blob, extension: fileExt };
                         }
-                    }, 'image/jpeg', 0.7);
+                    }, 'image/jpeg', 0.85);
 
                     const preview = document.getElementById(previewId);
-                    preview.src = canvas.toDataURL('image/jpeg', 0.7); // Just for local UI preview
+                    preview.src = canvas.toDataURL('image/jpeg', 0.85); 
                     preview.classList.remove('hidden');
-                    if(placeholderId) document.getElementById(placeholderId).classList.add('hidden');
+                    if (placeholderId) {
+                        document.getElementById(placeholderId).classList.add('hidden');
+                    }
                 }
                 img.src = e.target.result;
             }
             reader.readAsDataURL(file);
         };
 
+        // Binary direct stream to cloud storage
         async function uploadFileToCloudStorage(blobData, prefix) {
-            if(!blobData || !blobData.blob) return null;
-            const fileName = `${prefix}_${Date.now()}.${blobData.extension}`;
-            const storageReference = getStoragePath(fileName);
-            await uploadBytes(storageReference, blobData.blob);
-            return await getDownloadURL(storageReference);
+            if (!blobData || !blobData.blob) return null;
+            const filename = `${prefix}_${Date.now()}.${blobData.extension}`;
+            const refStorage = getStorageReference(filename);
+            await uploadBytes(refStorage, blobData.blob);
+            return await getDownloadURL(refStorage);
         }
 
-        function listenToLogoSettings() {
-            const logoRef = getDocPath('settings', 'logo');
-            onSnapshot(logoRef, (docSnap) => {
+        function listenToLogoSettingsChanges() {
+            const logoDocRef = getDocPath('settings', 'logo');
+            onSnapshot(logoDocRef, (snapshot) => {
                 const defIcon = document.getElementById('default-logo-icon');
-                const cusImg = document.getElementById('custom-logo-img');
-                if(docSnap.exists() && docSnap.data().url) {
-                    cusImg.src = docSnap.data().url;
-                    cusImg.classList.remove('hidden');
+                const customImg = document.getElementById('custom-logo-img');
+                if (snapshot.exists() && snapshot.data().url) {
+                    customImg.src = snapshot.data().url;
+                    customImg.classList.remove('hidden');
                     defIcon.classList.add('hidden');
                 } else {
-                    cusImg.classList.add('hidden');
+                    customImg.classList.add('hidden');
                     defIcon.classList.remove('hidden');
                 }
-            }, (error) => console.warn("Could not listen to logo:", error));
+            }, (err) => {
+                console.warn("Real-time logo listener error, offline fallback active.", err);
+            });
         }
 
+        // Custom logo settings upload
         window.uploadLogo = async function() {
-            if(!window.uploadedBlobs.adminLogo) return showToast("Select an image first", "error");
-            if(!currentUser) return;
+            if (!window.uploadedBlobs.adminLogo) {
+                return showToast("Select an image first", "error");
+            }
+            if (!auth.currentUser) return;
 
             const btn = document.getElementById('btn-upload-logo');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Storage...';
             
             try {
                 const url = await uploadFileToCloudStorage(window.uploadedBlobs.adminLogo, "logo");
-                await setDoc(getDocPath('settings', 'logo'), { url: url, updatedAt: serverTimestamp() });
-                showToast("Logo updated in Cloud!", "success");
+                if (url) {
+                    await setDoc(getDocPath('settings', 'logo'), { 
+                        url: url, 
+                        updatedAt: serverTimestamp() 
+                    });
+                    showToast("Logo updated successfully!", "success");
+                }
             } catch (e) {
-                console.error(e);
-                showToast("Failed to upload logo", "error");
+                console.error("Cloud logo update failed:", e);
+                showToast("Failed to upload logo settings", "error");
             } finally {
-                btn.innerHTML = 'Update Logo';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Dynamic Logo';
             }
         };
 
         let currentProducts = [];
 
         window.addProduct = async function() {
-            if(!currentUser) return;
+            if (!auth.currentUser) return;
             const name = document.getElementById('prod-name').value.trim();
             const price = document.getElementById('prod-price').value.trim();
-            if(!name || !price) return showToast("Enter name and price", "error");
+            if (!name || !price) return showToast("Enter variety name and price", "error");
 
             try {
-                await addDoc(getCollectionPath('products'), { name, price: Number(price), createdAt: serverTimestamp() });
+                await addDoc(getCollectionPath('products'), { 
+                    name, 
+                    price: Number(price), 
+                    createdAt: serverTimestamp() 
+                });
                 document.getElementById('prod-name').value = '';
                 document.getElementById('prod-price').value = '';
-                showToast("Product Added", "success");
-                loadAdminData(); // refresh list
+                showToast("Variety added successfully", "success");
+                loadAdminData(); 
             } catch(e) {
                 console.error(e);
-                showToast("Failed to add product", "error");
+                showToast("Failed to write to database", "error");
             }
         };
 
         window.deleteProduct = async function(id) {
-            if(!currentUser) return;
+            if (!auth.currentUser) return;
             try {
                 await deleteDoc(getDocPath('products', id));
-                showToast("Product deleted", "success");
+                showToast("Variety removed", "success");
                 loadAdminData();
             } catch(e) {
                 console.error(e);
-                showToast("Error deleting", "error");
+                showToast("Error deleting variety", "error");
             }
         };
 
-        function calculateTotal() {
+        function calculateOrderBillingTotal() {
             let total = 0;
             let selectedItems = [];
             const checkboxes = document.querySelectorAll('.prod-checkbox:checked');
@@ -502,31 +597,40 @@
             document.getElementById('new-cost').value = total || '';
             document.getElementById('new-items').value = selectedItems.join(', ');
         }
-        window.calculateTotal = calculateTotal;
+        window.calculateOrderBillingTotal = calculateOrderBillingTotal;
 
         window.createOrder = async function() {
-            if(!currentUser) return;
+            if (!auth.currentUser) return;
             const mobile = document.getElementById('new-mobile').value.trim();
             const items = document.getElementById('new-items').value.trim();
             const address = document.getElementById('new-address').value.trim();
             const cost = document.getElementById('new-cost').value.trim();
             let otp = document.getElementById('new-otp').value.trim().toUpperCase();
 
-            if(!mobile || !items || !address || !cost) return showToast("Fill all details", "error");
+            if (!mobile || !items || !address || !cost) {
+                return showToast("Fill all order fields", "error");
+            }
 
             const orderId = generateOrderID();
-            if(!otp) otp = orderId.slice(-4);
+            if (!otp) otp = orderId.slice(-4); 
 
             const btn = document.getElementById('btn-create-order');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Writing assignment...';
 
             try {
                 await addDoc(getCollectionPath('orders'), {
-                    orderId, mobile, items, address, cost: Number(cost), otp, status: 'Pending', createdAt: serverTimestamp()
+                    orderId, 
+                    mobile, 
+                    items, 
+                    address, 
+                    cost: Number(cost), 
+                    otp, 
+                    status: 'Pending', 
+                    createdAt: serverTimestamp()
                 });
-                showToast(`Order ${orderId} Created!`, "success");
+                showToast(`Order ${orderId} saved to database!`, "success");
                 
-                // Clear form
+                // Reset Fields
                 document.getElementById('new-mobile').value = '';
                 document.getElementById('new-items').value = '';
                 document.getElementById('new-address').value = '';
@@ -537,34 +641,33 @@
                 loadAdminData();
             } catch (e) {
                 console.error(e);
-                showToast("Order creation failed", "error");
+                showToast("Failed to write to database", "error");
             } finally {
-                btn.innerHTML = 'Generate Order';
+                btn.innerHTML = '<i class="fa-solid fa-file-invoice"></i> Save Order Assignment';
             }
         };
 
         let currentActiveOrder = null;
 
         window.searchOrder = async function() {
-            if(!currentUser) return showToast("Wait for cloud connection.", "info");
+            if (!auth.currentUser) return showToast("Checking cloud authentication...", "info");
             const mobile = document.getElementById('search-mobile').value.trim();
-            if(!mobile || mobile.length < 10) return showToast("Enter valid 10-digit number", "error");
+            if (!mobile || mobile.length < 10) return showToast("Enter correct 10-digit number", "error");
 
             const btn = document.querySelector('#delivery-step-1 button');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Locating Order...';
             
             try {
-                const snap = await getDocs(getCollectionPath('orders'));
+                const snapshot = await getDocs(getCollectionPath('orders'));
                 let found = null;
-                snap.forEach(doc => {
+                snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Searching locally to avoid complex Firestore indexing rules
-                    if(data.mobile === mobile && data.status === 'Pending') {
+                    if (data.mobile === mobile && data.status === 'Pending') {
                         found = { id: doc.id, ...data };
                     }
                 });
 
-                if(found) {
+                if (found) {
                     currentActiveOrder = found;
                     document.getElementById('delivery-step-1').classList.add('hidden');
                     document.getElementById('delivery-step-2').classList.remove('hidden');
@@ -580,11 +683,11 @@
                     document.getElementById('photo-placeholder').classList.remove('hidden');
                     window.uploadedBlobs.deliveryProof = null;
                 } else {
-                    showToast("No pending order found.", "error");
+                    showToast("No pending order found for this number.", "error");
                 }
             } catch (e) {
                 console.error(e);
-                showToast("Search failed.", "error");
+                showToast("Failed to fetch database records.", "error");
             } finally {
                 btn.innerHTML = '<span>Search Order</span> <i class="fa-solid fa-arrow-right"></i>';
             }
@@ -599,57 +702,66 @@
         };
 
         window.confirmDelivery = async function() {
-            if(!currentActiveOrder || !currentUser) return;
+            if (!currentActiveOrder || !auth.currentUser) return;
             const inputOtp = document.getElementById('verify-otp').value.trim().toUpperCase();
-            if(!inputOtp) return showToast("Enter OTP/Last 4 digits", "error");
-            if(!window.uploadedBlobs.deliveryProof) return showToast("Upload delivery photo proof", "error");
+            if (!inputOtp) return showToast("Verification key is required", "error");
+            if (!window.uploadedBlobs.deliveryProof) return showToast("Take snapshot delivery proof photo first", "error");
 
-            const last4 = currentActiveOrder.orderId.slice(-4).toUpperCase();
-            const expOtp = currentActiveOrder.otp ? currentActiveOrder.otp.toUpperCase() : last4;
+            const last4Digits = currentActiveOrder.orderId.slice(-4).toUpperCase();
+            const correctOtp = currentActiveOrder.otp ? currentActiveOrder.otp.toUpperCase() : last4Digits;
 
-            if(inputOtp !== expOtp && inputOtp !== last4) return showToast("Invalid OTP!", "error");
+            if (inputOtp !== correctOtp && inputOtp !== last4Digits) {
+                return showToast("Incorrect security code. Delivery validation failed!", "error");
+            }
 
             const btn = document.getElementById('btn-confirm-delivery');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving to Cloud...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Hosting Proof Image...';
             btn.disabled = true;
 
             try {
-                // Upload Blob to Cloud Storage
-                const photoUrl = await uploadFileToCloudStorage(window.uploadedBlobs.deliveryProof, "delivery");
+                // Upload Blob directly to Cloud Storage
+                const proofUrl = await uploadFileToCloudStorage(window.uploadedBlobs.deliveryProof, "delivery");
                 
-                // Update Firestore Document
-                await updateDoc(getDocPath('orders', currentActiveOrder.id), {
-                    status: 'Delivered',
-                    deliveryPhotoUrl: photoUrl,
-                    deliveredAt: serverTimestamp()
-                });
+                if (proofUrl) {
+                    // Update Firestore Status with Direct Storage URL Reference
+                    await updateDoc(getDocPath('orders', currentActiveOrder.id), {
+                        status: 'Delivered',
+                        deliveryPhotoUrl: proofUrl,
+                        deliveredAt: serverTimestamp()
+                    });
 
-                showToast("Delivery Confirmed!", "success");
-                document.getElementById('delivery-step-2').classList.add('hidden');
-                document.getElementById('delivery-step-3').classList.remove('hidden');
+                    showToast("Delivery verified and logged securely!", "success");
+                    document.getElementById('delivery-step-2').classList.add('hidden');
+                    document.getElementById('delivery-step-3').classList.remove('hidden');
+                } else {
+                    showToast("Failed to upload image verification proof.", "error");
+                }
             } catch (e) {
                 console.error(e);
-                showToast("Failed to save delivery details", "error");
+                showToast("Error updating database parameters", "error");
             } finally {
-                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> <span>Confirm Delivery</span>';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Confirm Delivery</span>';
                 btn.disabled = false;
             }
         };
 
         window.loginAdmin = function() {
             const pass = document.getElementById('admin-pass').value;
-            if(pass === '00/8/12BA') {
+            if (pass === '00/8/12BA') {
                 sessionStorage.setItem('raf_admin_auth', 'true');
-                showToast("Login Successful", "success");
+                showToast("Access Authorized", "success");
                 document.getElementById('admin-pass').value = '';
                 showAdminDashboard();
-            } else showToast("Invalid Passcode", "error");
+            } else {
+                showToast("Access Denied: Incorrect Passcode", "error");
+            }
         };
 
         window.logoutAdmin = function() {
             sessionStorage.removeItem('raf_admin_auth');
             document.getElementById('admin-dashboard').classList.add('hidden');
             document.getElementById('admin-login').classList.remove('hidden');
+            window.location.hash = ''; 
         };
 
         window.showAdminDashboard = function() {
@@ -659,80 +771,91 @@
         };
 
         window.loadAdminData = async function() {
-            if(!currentUser) return;
+            if (!auth.currentUser) return;
             
-            // Load Products
+            // Load Products List
             const pCont = document.getElementById('admin-products-list');
             const opCont = document.getElementById('order-product-selection');
-            pCont.innerHTML = '<p class="text-xs text-slate-400">Loading...</p>';
+            pCont.innerHTML = '<p class="text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> Syncing Stock...</p>';
             
             try {
                 const pSnap = await getDocs(getCollectionPath('products'));
                 currentProducts = [];
-                pSnap.forEach(d => currentProducts.push({id: d.id, ...d.data()}));
+                pSnap.forEach(docSnap => currentProducts.push({ id: docSnap.id, ...docSnap.data() }));
                 
-                if(currentProducts.length === 0) {
-                    pCont.innerHTML = '<p class="text-xs text-slate-400">No products added.</p>';
-                    opCont.innerHTML = '<p class="text-xs text-slate-400">Add products to see them here.</p>';
+                if (currentProducts.length === 0) {
+                    pCont.innerHTML = '<p class="text-xs text-slate-400">Empty list.</p>';
+                    opCont.innerHTML = '<p class="text-xs text-slate-400">No stocked variety names yet.</p>';
                 } else {
                     pCont.innerHTML = currentProducts.map(p => `
-                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100 text-sm">
-                            <span>${p.name} <span class="text-green-600 font-bold">₹${p.price}</span></span>
-                            <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex justify-between items-center bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 text-sm">
+                            <span class="font-medium text-slate-700">${p.name} <span class="text-emerald-600 font-bold">₹${p.price}</span></span>
+                            <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     `).join('');
                     
                     opCont.innerHTML = currentProducts.map(p => `
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="prod-checkbox rounded text-cyan-600" data-name="${p.name}" data-price="${p.price}" onchange="calculateTotal()">
-                            <span class="flex-1">${p.name}</span>
-                            <span class="text-slate-500">₹${p.price}</span>
+                        <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-white transition">
+                            <input type="checkbox" class="prod-checkbox rounded text-cyan-600 animate-none" data-name="${p.name}" data-price="${p.price}" onchange="calculateOrderBillingTotal()">
+                            <span class="flex-1 text-slate-700 font-medium">${p.name}</span>
+                            <span class="font-bold text-slate-600">₹${p.price}</span>
                         </label>
                     `).join('');
                 }
-            } catch(e) { console.error("Error loading products", e); }
+            } catch(e) { 
+                console.error("Failed to load products list:", e); 
+            }
 
-            // Load Orders
+            // Load Active Orders List
             const oCont = document.getElementById('admin-orders-list');
-            oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
+            oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-10"><i class="fa-solid fa-spinner fa-spin"></i> Syncing Logs...</p>';
             
             try {
                 const oSnap = await getDocs(getCollectionPath('orders'));
                 let orders = [];
-                oSnap.forEach(d => orders.push({id: d.id, ...d.data()}));
+                oSnap.forEach(docSnap => orders.push({ id: docSnap.id, ...docSnap.data() }));
                 
+                // Sorting: pending first, then newest
                 orders.sort((a, b) => {
-                    if(a.status === 'Pending' && b.status === 'Delivered') return -1;
-                    if(a.status === 'Delivered' && b.status === 'Pending') return 1;
+                    if (a.status === 'Pending' && b.status === 'Delivered') return -1;
+                    if (a.status === 'Delivered' && b.status === 'Pending') return 1;
                     return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
                 });
 
-                if(orders.length === 0) {
-                    oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4">No orders in database.</p>';
+                if (orders.length === 0) {
+                    oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-10">No orders registered yet.</p>';
                     return;
                 }
 
                 oCont.innerHTML = orders.map(o => {
                     const stColor = o.status === 'Pending' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
-                    const photoHtml = o.deliveryPhotoUrl ? `<div class="mt-2"><a href="${o.deliveryPhotoUrl}" target="_blank" class="text-xs text-cyan-600 hover:underline"><i class="fa-solid fa-image"></i> View Cloud Proof</a></div>` : '';
+                    const photoHtml = o.deliveryPhotoUrl ? `
+                        <div class="mt-3 pt-3 border-t border-slate-100">
+                            <a href="${o.deliveryPhotoUrl}" target="_blank" class="text-xs text-cyan-600 hover:underline inline-flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-images"></i> View Storage Image Proof
+                            </a>
+                        </div>` : '';
                     return `
                     <div class="border border-slate-200 bg-white p-4 rounded-xl shadow-sm text-sm relative">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="font-bold text-slate-800">${o.orderId}</span> <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2"><i class="fa-solid fa-phone fa-xs"></i> ${o.mobile}</span></div>
+                            <div>
+                                <span class="font-extrabold text-slate-800">${o.orderId}</span> 
+                                <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2 font-semibold"><i class="fa-solid fa-phone fa-xs"></i> ${o.mobile}</span>
+                            </div>
                             <span class="px-2 py-1 rounded-md text-xs font-bold border ${stColor}">${o.status}</span>
                         </div>
                         <p class="text-slate-700 mb-1 font-medium"><i class="fa-solid fa-fish fa-sm text-cyan-500 w-5"></i> ${o.items}</p>
                         <p class="text-slate-500 text-xs mb-2"><i class="fa-solid fa-map-marker-alt fa-sm text-slate-400 w-5"></i> ${o.address}</p>
                         <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 bg-slate-50 -mx-4 -mb-4 p-3 rounded-b-xl">
-                            <p class="text-xs text-slate-500">OTP: <span class="font-mono font-bold text-slate-800 bg-white border border-slate-200 px-1.5 py-0.5 rounded">${o.otp || o.orderId.slice(-4)}</span></p>
-                            <span class="font-bold text-green-600 text-base">₹${o.cost}</span>
+                            <p class="text-xs text-slate-500">Security Key: <span class="font-mono font-bold text-slate-800 bg-white border border-slate-200 px-1.5 py-0.5 rounded">${o.otp || o.orderId.slice(-4)}</span></p>
+                            <span class="font-extrabold text-green-600 text-base">₹${o.cost}</span>
                         </div>
                         ${photoHtml}
                     </div>`;
                 }).join('');
             } catch (e) {
-                console.error("Error loading orders", e);
-                oCont.innerHTML = '<p class="text-red-500 text-center text-sm mt-4">Failed to load data from Cloud.</p>';
+                console.error("Failed to load orders tracking list", e);
+                oCont.innerHTML = '<p class="text-red-500 text-center text-sm mt-10">Error loading assignments.</p>';
             }
         };
     </script>
