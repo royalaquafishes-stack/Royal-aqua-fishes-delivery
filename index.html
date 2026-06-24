@@ -7,10 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0fdfa; /* Light teal/aqua background */
+            background-color: #f0fdfa;
             margin: 0;
             padding: 0;
             color: #1e293b;
@@ -22,7 +23,6 @@
         }
         .hidden { display: none !important; }
         
-        /* Custom File Input Styling */
         input[type="file"]::file-selector-button {
             border: none;
             background: #0ea5e9;
@@ -34,11 +34,8 @@
             margin-right: 10px;
             font-weight: 500;
         }
-        input[type="file"]::file-selector-button:hover {
-            background: #0284c7;
-        }
+        input[type="file"]::file-selector-button:hover { background: #0284c7; }
 
-        /* Toast Notifications */
         #toast-container {
             position: fixed;
             bottom: 20px;
@@ -66,53 +63,49 @@
         .toast.error { background-color: #ef4444; }
         .toast.info { background-color: #3b82f6; }
         
-        @keyframes slideUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; transform: translateY(-10px); }
-        }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col items-center p-4 sm:p-6">
 
-    <!-- Toast Notification Container -->
     <div id="toast-container"></div>
 
-    <!-- Main App Container -->
-    <div class="w-full max-w-md mx-auto relative mt-2 sm:mt-10">
+    <div class="w-full max-w-4xl mx-auto relative mt-2 sm:mt-10">
         
-        <!-- Header -->
+        <!-- Header with Dynamic Logo -->
         <div class="text-center mb-6">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 text-cyan-600 mb-3 shadow-inner">
-                <i class="fa-solid fa-fish-fins text-3xl"></i>
+            <div id="logo-container" class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-cyan-100 text-cyan-600 mb-3 shadow-inner overflow-hidden border-2 border-white">
+                <i id="default-logo-icon" class="fa-solid fa-fish-fins text-4xl"></i>
+                <img id="custom-logo-img" class="hidden w-full h-full object-cover" alt="Royal Aqua Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-800">Royal Aqua Fishes</h1>
             <p id="page-subtitle" class="text-slate-500 font-medium mt-1">Delivery Portal</p>
+            <div id="connection-status" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-amber-50 text-amber-700 border border-amber-200">
+                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting to Cloud...
+            </div>
         </div>
 
         <!-- LOADING SPINNER -->
-        <div id="loader" class="flex flex-col items-center justify-center py-10 glass-panel rounded-2xl">
+        <div id="loader" class="flex flex-col items-center justify-center py-10 glass-panel rounded-2xl max-w-md mx-auto">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mb-4"></div>
-            <p class="text-slate-500">Connecting to database...</p>
+            <p class="text-slate-500 font-medium">Authenticating Securely...</p>
         </div>
 
         <!-- ================= DELIVERY PORTAL VIEW ================= -->
-        <div id="view-delivery" class="hidden w-full">
+        <div id="view-delivery" class="hidden w-full max-w-md mx-auto">
             
-            <!-- Step 1: Mobile Number Search -->
             <div id="delivery-step-1" class="glass-panel p-6 rounded-2xl">
                 <h2 class="text-lg font-semibold mb-4 text-slate-700">Find Order</h2>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-600 mb-1">Customer Mobile No.</label>
-                    <input type="tel" id="search-mobile" placeholder="Enter mobile number" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition shadow-sm">
+                    <input type="tel" id="search-mobile" placeholder="Enter 10-digit mobile number" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition shadow-sm font-medium">
                 </div>
                 <button onclick="searchOrder()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                    <span>Continue</span> <i class="fa-solid fa-arrow-right"></i>
+                    <span>Search Order</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
 
-            <!-- Step 2: Order Details & Confirmation -->
             <div id="delivery-step-2" class="hidden glass-panel p-6 rounded-2xl">
                 <button onclick="backToSearch()" class="text-cyan-600 text-sm font-medium mb-4 flex items-center gap-1 hover:text-cyan-800">
                     <i class="fa-solid fa-arrow-left"></i> Back
@@ -136,28 +129,27 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-600 mb-1">Delivery Proof (Photo)</label>
                         <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
-                            <input type="file" id="delivery-photo" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewImage(event)">
+                            <input type="file" id="delivery-photo" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewImage(event, 'photo-preview', 'photo-placeholder')">
                             <div id="photo-placeholder" class="text-slate-500">
                                 <i class="fa-solid fa-camera text-2xl mb-2"></i>
                                 <p class="text-sm">Tap to take a photo or upload</p>
                             </div>
-                            <img id="photo-preview" class="hidden max-h-32 mx-auto rounded-lg shadow-sm" />
+                            <img id="photo-preview" class="hidden max-h-32 mx-auto rounded-lg shadow-sm" alt="Preview"/>
                         </div>
                     </div>
 
-                    <button onclick="confirmDelivery()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition shadow-md mt-4 flex items-center justify-center gap-2">
+                    <button id="btn-confirm-delivery" onclick="confirmDelivery()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition shadow-md mt-4 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-check-circle"></i> <span>Confirm Delivery</span>
                     </button>
                 </div>
             </div>
             
-            <!-- Step 3: Success Screen -->
             <div id="delivery-step-3" class="hidden glass-panel p-8 rounded-2xl text-center">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-500 mb-4">
                     <i class="fa-solid fa-check text-4xl"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800 mb-2">Delivery Successful!</h2>
-                <p class="text-slate-500 mb-6">The order has been marked as delivered safely.</p>
+                <p class="text-slate-500 mb-6">The order has been saved to the Cloud Storage.</p>
                 <button onclick="backToSearch()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition shadow-md">
                     Deliver Another Order
                 </button>
@@ -165,9 +157,8 @@
         </div>
 
         <!-- ================= ADMIN PORTAL VIEW ================= -->
-        <div id="view-admin" class="hidden w-full max-w-3xl mx-auto" style="max-width: 800px;">
+        <div id="view-admin" class="hidden w-full max-w-5xl mx-auto">
             
-            <!-- Admin Login -->
             <div id="admin-login" class="glass-panel p-6 rounded-2xl max-w-md mx-auto">
                 <div class="text-center mb-6">
                     <i class="fa-solid fa-user-shield text-4xl text-slate-700 mb-2"></i>
@@ -175,63 +166,98 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-600 mb-1">Passcode</label>
-                    <input type="password" id="admin-pass" placeholder="Enter Admin Passcode" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-700 text-center tracking-widest">
+                    <input type="password" id="admin-pass" placeholder="Enter Admin Passcode" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-700 text-center tracking-widest font-mono">
                 </div>
                 <button onclick="loginAdmin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition shadow-md">
                     Access Admin Panel
                 </button>
             </div>
 
-            <!-- Admin Dashboard -->
             <div id="admin-dashboard" class="hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-gauge-high mr-2"></i>Dashboard</h2>
-                    <button onclick="logoutAdmin()" class="text-sm bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg font-medium transition">Logout</button>
+                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
+                    <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-gauge-high mr-2 text-cyan-600"></i>Dashboard</h2>
+                    <button onclick="logoutAdmin()" class="text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-medium transition">Logout</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Create Order Form -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Left Column: Products & Settings -->
+                    <div class="space-y-6">
+                        <!-- Settings: Logo -->
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2"><i class="fa-solid fa-image mr-2"></i>Logo Settings</h3>
+                            <div class="text-sm text-slate-600 mb-3">Upload a new shop logo to Cloud Storage.</div>
+                            <input type="file" id="logo-upload" accept="image/*" class="w-full text-sm mb-3" onchange="previewImage(event, 'logo-admin-preview', null, true)">
+                            <img id="logo-admin-preview" class="hidden max-h-20 mb-3 rounded shadow-sm">
+                            <button id="btn-upload-logo" onclick="uploadLogo()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold py-2 rounded-lg transition text-sm">
+                                Update Logo
+                            </button>
+                        </div>
+
+                        <!-- Product Management -->
+                        <div class="glass-panel p-5 rounded-2xl">
+                            <h3 class="text-md font-bold text-slate-700 mb-3 border-b pb-2"><i class="fa-solid fa-fish mr-2"></i>Products</h3>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="prod-name" placeholder="Fish Name" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
+                                <input type="number" id="prod-price" placeholder="₹ Price" class="w-24 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
+                            </div>
+                            <button onclick="addProduct()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 rounded-lg transition text-sm mb-4">
+                                Add Product
+                            </button>
+                            <div id="admin-products-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                <p class="text-xs text-slate-400">Loading products...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Middle Column: Create Order -->
                     <div class="glass-panel p-6 rounded-2xl">
                         <h3 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle mr-2"></i>Create New Order</h3>
                         
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase">Customer Mobile</label>
-                                <input type="tel" id="new-mobile" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+                                <input type="tel" id="new-mobile" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm" placeholder="10-digit number">
                             </div>
+                            
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase">Fish Details / Items</label>
-                                <input type="text" id="new-items" placeholder="e.g. 2x Betta, 1x Guppy Pair" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Select Products</label>
+                                <div id="order-product-selection" class="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-sm">
+                                    <p class="text-xs text-slate-400">Loading products...</p>
+                                </div>
                             </div>
+                            <div class="text-xs text-slate-500">Or type custom items:</div>
+                            <input type="text" id="new-items" placeholder="e.g. 1x Custom Tank" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+                            
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase">Delivery Address</label>
                                 <textarea id="new-address" rows="2" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"></textarea>
                             </div>
+                            
                             <div class="flex gap-3">
                                 <div class="flex-1">
                                     <label class="block text-xs font-semibold text-slate-500 uppercase">Total Cost (₹)</label>
-                                    <input type="number" id="new-cost" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+                                    <input type="number" id="new-cost" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-bold text-green-600">
                                 </div>
                                 <div class="flex-1">
                                     <label class="block text-xs font-semibold text-slate-500 uppercase">Custom OTP</label>
-                                    <input type="text" id="new-otp" placeholder="(Auto generated if blank)" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-mono uppercase">
+                                    <input type="text" id="new-otp" placeholder="(Auto if blank)" class="w-full px-3 py-2 mt-1 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-mono uppercase">
                                 </div>
                             </div>
-                            <button onclick="createOrder()" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg transition shadow-md">
+                            <button id="btn-create-order" onclick="createOrder()" class="w-full mt-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-lg transition shadow-md">
                                 Generate Order
                             </button>
                         </div>
                     </div>
 
-                    <!-- Order List -->
+                    <!-- Right Column: Orders List -->
                     <div class="glass-panel p-6 rounded-2xl flex flex-col">
                         <div class="flex justify-between items-center mb-4 border-b pb-2">
                             <h3 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-list mr-2"></i>Active Orders</h3>
-                            <button onclick="loadAdminOrders()" class="text-cyan-600 hover:text-cyan-800"><i class="fa-solid fa-rotate-right"></i></button>
+                            <button onclick="loadAdminData()" class="text-cyan-600 hover:text-cyan-800 bg-cyan-50 p-2 rounded-lg"><i class="fa-solid fa-rotate-right"></i></button>
                         </div>
                         
-                        <div id="admin-orders-list" class="flex-1 overflow-y-auto max-h-[400px] space-y-3 pr-2">
-                            <!-- Orders will be populated here -->
+                        <div id="admin-orders-list" class="flex-1 overflow-y-auto max-h-[500px] space-y-3 pr-2">
                             <p class="text-slate-400 text-center text-sm mt-10">Loading orders...</p>
                         </div>
                     </div>
@@ -241,34 +267,39 @@
 
     </div>
 
-    <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Firebase Configuration setup from environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'royal-aqua-delivery-app';
-        let app, db, auth;
+        // Required paths based on user prompt
+        const PROJECT_APP_ID = "royal-aqua-pro-v1"; 
+
+        let app, db, auth, storage;
         let currentUser = null;
 
-        // Try initializing Firebase
+        window.uploadedBlobs = {
+            deliveryProof: null,
+            adminLogo: null
+        };
+
+        // Initialize App
         try {
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                // Mock config fallback if environment not present, to prevent immediate crash in standalone, 
-                // though real db calls will fail without valid config.
-                apiKey: "mock-key", projectId: "mock-project"
-            };
-            
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            authenticateFirebase();
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            if (firebaseConfig) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                storage = getStorage(app);
+                authenticateFirebase();
+            } else {
+                showToast("Fatal Error: Firebase Config missing from environment.", "error");
+                document.getElementById('loader').innerHTML = "<p class='text-red-500'>Missing Config</p>";
+            }
         } catch (error) {
-            console.error("Firebase init error:", error);
-            showToast("Database connection failed. Please check setup.", "error");
-            document.getElementById('loader').innerHTML = '<p class="text-red-500 p-4">Initialization Failed.</p>';
+            console.error("Firebase initialization error:", error);
+            showToast("Initialization Error", "error");
         }
 
         async function authenticateFirebase() {
@@ -282,33 +313,49 @@
                 }
                 console.log("Authenticated as:", currentUser.uid);
                 
-                // Once authenticated, start the app logic based on routing
+                // Update UI status
+                const statusEl = document.getElementById('connection-status');
+                statusEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200";
+                statusEl.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 opacity-75"></span> Cloud Active`;
+                
                 initApp();
             } catch (error) {
-                console.error("Auth Error:", error);
-                showToast("Authentication failed.", "error");
-                document.getElementById('loader').innerHTML = '<p class="text-red-500 p-4">Auth Failed.</p>';
+                console.error("Firebase Auth Error:", error);
+                document.getElementById('loader').innerHTML = `<p class='text-red-500'>Auth Failed. Please enable Anonymous login in Console.</p><p class="text-xs mt-2 text-slate-500">${error.message}</p>`;
             }
         }
 
-        // --- GLOBAL APP STATE & VARIABLES ---
-        window.db = db;
-        window.appId = appId;
-        window.getDocs = getDocs;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.updateDoc = updateDoc;
-        window.doc = doc;
-        window.serverTimestamp = serverTimestamp;
+        // Path Generators (Strict adherence to prompt)
+        const getCollectionPath = (colName) => collection(db, 'artifacts', PROJECT_APP_ID, 'public', 'data', colName);
+        const getDocPath = (colName, docId) => doc(db, 'artifacts', PROJECT_APP_ID, 'public', 'data', colName, docId);
+        const getStoragePath = (fileName) => ref(storage, `/artifacts/${PROJECT_APP_ID}/images/${fileName}`);
 
-        let currentActiveOrder = null;
-        let uploadedPhotoBase64 = null;
-        let allOrdersMemory = [];
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        window.generateOrderID = function() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = 'ORD-';
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            return result;
+        };
 
         function initApp() {
             document.getElementById('loader').classList.add('hidden');
+            listenToLogoSettings();
             window.addEventListener('hashchange', router);
-            router(); // Call initially
+            router();
         }
 
         function router() {
@@ -320,7 +367,6 @@
             if (hash === '#raf-admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('page-subtitle').innerText = "Admin Portal";
-                // Check if already logged in via session storage (simple client side check)
                 if(sessionStorage.getItem('raf_admin_auth') === 'true') {
                     showAdminDashboard();
                 } else {
@@ -333,92 +379,215 @@
             }
         }
 
-        // --- UTILITY FUNCTIONS ---
-        window.showToast = function(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            let icon = 'fa-info-circle';
-            if(type === 'success') icon = 'fa-check-circle';
-            if(type === 'error') icon = 'fa-exclamation-circle';
+        window.previewImage = function(event, previewId, placeholderId, isAdminLogo = false) {
+            const file = event.target.files[0];
+            if(!file) return;
 
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
-            container.appendChild(toast);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 800; // Compress image
+                    let scaleSize = 1;
+                    if(img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+                    
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Generate Blob for Cloud Storage
+                    canvas.toBlob((blob) => {
+                        if(isAdminLogo) {
+                            window.uploadedBlobs.adminLogo = { blob, extension: file.name.split('.').pop() };
+                        } else {
+                            window.uploadedBlobs.deliveryProof = { blob, extension: file.name.split('.').pop() };
+                        }
+                    }, 'image/jpeg', 0.7);
 
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s forwards';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
-
-        window.generateOrderID = function() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = 'ORD-';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    const preview = document.getElementById(previewId);
+                    preview.src = canvas.toDataURL('image/jpeg', 0.7); // Just for local UI preview
+                    preview.classList.remove('hidden');
+                    if(placeholderId) document.getElementById(placeholderId).classList.add('hidden');
+                }
+                img.src = e.target.result;
             }
-            return result;
+            reader.readAsDataURL(file);
         };
 
-        // --- DELIVERY PORTAL LOGIC ---
-        window.searchOrder = async function() {
+        async function uploadFileToCloudStorage(blobData, prefix) {
+            if(!blobData || !blobData.blob) return null;
+            const fileName = `${prefix}_${Date.now()}.${blobData.extension}`;
+            const storageReference = getStoragePath(fileName);
+            await uploadBytes(storageReference, blobData.blob);
+            return await getDownloadURL(storageReference);
+        }
+
+        function listenToLogoSettings() {
+            const logoRef = getDocPath('settings', 'logo');
+            onSnapshot(logoRef, (docSnap) => {
+                const defIcon = document.getElementById('default-logo-icon');
+                const cusImg = document.getElementById('custom-logo-img');
+                if(docSnap.exists() && docSnap.data().url) {
+                    cusImg.src = docSnap.data().url;
+                    cusImg.classList.remove('hidden');
+                    defIcon.classList.add('hidden');
+                } else {
+                    cusImg.classList.add('hidden');
+                    defIcon.classList.remove('hidden');
+                }
+            }, (error) => console.warn("Could not listen to logo:", error));
+        }
+
+        window.uploadLogo = async function() {
+            if(!window.uploadedBlobs.adminLogo) return showToast("Select an image first", "error");
             if(!currentUser) return;
-            const mobile = document.getElementById('search-mobile').value.trim();
-            if(!mobile || mobile.length < 10) {
-                showToast("Please enter a valid mobile number", "error");
-                return;
-            }
 
-            const btn = document.querySelector('#delivery-step-1 button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
-            btn.disabled = true;
+            const btn = document.getElementById('btn-upload-logo');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            
+            try {
+                const url = await uploadFileToCloudStorage(window.uploadedBlobs.adminLogo, "logo");
+                await setDoc(getDocPath('settings', 'logo'), { url: url, updatedAt: serverTimestamp() });
+                showToast("Logo updated in Cloud!", "success");
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to upload logo", "error");
+            } finally {
+                btn.innerHTML = 'Update Logo';
+            }
+        };
+
+        let currentProducts = [];
+
+        window.addProduct = async function() {
+            if(!currentUser) return;
+            const name = document.getElementById('prod-name').value.trim();
+            const price = document.getElementById('prod-price').value.trim();
+            if(!name || !price) return showToast("Enter name and price", "error");
 
             try {
-                // Rule 2 & 1 applied: Fetch all from strict public path and filter in memory
-                const ordersRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'orders');
-                const snapshot = await getDocs(ordersRef);
+                await addDoc(getCollectionPath('products'), { name, price: Number(price), createdAt: serverTimestamp() });
+                document.getElementById('prod-name').value = '';
+                document.getElementById('prod-price').value = '';
+                showToast("Product Added", "success");
+                loadAdminData(); // refresh list
+            } catch(e) {
+                console.error(e);
+                showToast("Failed to add product", "error");
+            }
+        };
+
+        window.deleteProduct = async function(id) {
+            if(!currentUser) return;
+            try {
+                await deleteDoc(getDocPath('products', id));
+                showToast("Product deleted", "success");
+                loadAdminData();
+            } catch(e) {
+                console.error(e);
+                showToast("Error deleting", "error");
+            }
+        };
+
+        function calculateTotal() {
+            let total = 0;
+            let selectedItems = [];
+            const checkboxes = document.querySelectorAll('.prod-checkbox:checked');
+            checkboxes.forEach(cb => {
+                total += Number(cb.dataset.price);
+                selectedItems.push(cb.dataset.name);
+            });
+            document.getElementById('new-cost').value = total || '';
+            document.getElementById('new-items').value = selectedItems.join(', ');
+        }
+        window.calculateTotal = calculateTotal;
+
+        window.createOrder = async function() {
+            if(!currentUser) return;
+            const mobile = document.getElementById('new-mobile').value.trim();
+            const items = document.getElementById('new-items').value.trim();
+            const address = document.getElementById('new-address').value.trim();
+            const cost = document.getElementById('new-cost').value.trim();
+            let otp = document.getElementById('new-otp').value.trim().toUpperCase();
+
+            if(!mobile || !items || !address || !cost) return showToast("Fill all details", "error");
+
+            const orderId = generateOrderID();
+            if(!otp) otp = orderId.slice(-4);
+
+            const btn = document.getElementById('btn-create-order');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+
+            try {
+                await addDoc(getCollectionPath('orders'), {
+                    orderId, mobile, items, address, cost: Number(cost), otp, status: 'Pending', createdAt: serverTimestamp()
+                });
+                showToast(`Order ${orderId} Created!`, "success");
                 
-                let foundOrder = null;
-                // Find pending order with matching mobile
-                snapshot.forEach(doc => {
+                // Clear form
+                document.getElementById('new-mobile').value = '';
+                document.getElementById('new-items').value = '';
+                document.getElementById('new-address').value = '';
+                document.getElementById('new-cost').value = '';
+                document.getElementById('new-otp').value = '';
+                document.querySelectorAll('.prod-checkbox').forEach(cb => cb.checked = false);
+
+                loadAdminData();
+            } catch (e) {
+                console.error(e);
+                showToast("Order creation failed", "error");
+            } finally {
+                btn.innerHTML = 'Generate Order';
+            }
+        };
+
+        let currentActiveOrder = null;
+
+        window.searchOrder = async function() {
+            if(!currentUser) return showToast("Wait for cloud connection.", "info");
+            const mobile = document.getElementById('search-mobile').value.trim();
+            if(!mobile || mobile.length < 10) return showToast("Enter valid 10-digit number", "error");
+
+            const btn = document.querySelector('#delivery-step-1 button');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+            
+            try {
+                const snap = await getDocs(getCollectionPath('orders'));
+                let found = null;
+                snap.forEach(doc => {
                     const data = doc.data();
+                    // Searching locally to avoid complex Firestore indexing rules
                     if(data.mobile === mobile && data.status === 'Pending') {
-                        foundOrder = { id: doc.id, ...data };
+                        found = { id: doc.id, ...data };
                     }
                 });
 
-                if(foundOrder) {
-                    currentActiveOrder = foundOrder;
-                    showDeliveryStep2(foundOrder);
+                if(found) {
+                    currentActiveOrder = found;
+                    document.getElementById('delivery-step-1').classList.add('hidden');
+                    document.getElementById('delivery-step-2').classList.remove('hidden');
+                    
+                    document.getElementById('lbl-order-id').innerText = found.orderId;
+                    document.getElementById('lbl-items').innerText = found.items;
+                    document.getElementById('lbl-address').innerText = found.address;
+                    document.getElementById('lbl-amount').innerText = "₹" + found.cost;
+                    
+                    document.getElementById('verify-otp').value = '';
+                    document.getElementById('delivery-photo').value = '';
+                    document.getElementById('photo-preview').classList.add('hidden');
+                    document.getElementById('photo-placeholder').classList.remove('hidden');
+                    window.uploadedBlobs.deliveryProof = null;
                 } else {
-                    showToast("No pending order found for this number.", "error");
+                    showToast("No pending order found.", "error");
                 }
-            } catch (error) {
-                console.error("Fetch error:", error);
-                showToast("Error searching database.", "error");
+            } catch (e) {
+                console.error(e);
+                showToast("Search failed.", "error");
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                btn.innerHTML = '<span>Search Order</span> <i class="fa-solid fa-arrow-right"></i>';
             }
-        };
-
-        window.showDeliveryStep2 = function(order) {
-            document.getElementById('delivery-step-1').classList.add('hidden');
-            document.getElementById('delivery-step-2').classList.remove('hidden');
-            
-            document.getElementById('lbl-order-id').innerText = order.orderId;
-            document.getElementById('lbl-items').innerText = order.items;
-            document.getElementById('lbl-address').innerText = order.address;
-            document.getElementById('lbl-amount').innerText = "₹" + order.cost;
-            
-            // reset inputs
-            document.getElementById('verify-otp').value = '';
-            document.getElementById('delivery-photo').value = '';
-            document.getElementById('photo-preview').classList.add('hidden');
-            document.getElementById('photo-placeholder').classList.remove('hidden');
-            uploadedPhotoBase64 = null;
         };
 
         window.backToSearch = function() {
@@ -429,96 +598,44 @@
             document.getElementById('search-mobile').value = '';
         };
 
-        window.previewImage = function(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-
-            // Compress image to Base64 to save in Firestore (safe under 1MB limit)
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Max width 500px for basic proof
-                    const MAX_WIDTH = 500;
-                    let scaleSize = 1;
-                    if(img.width > MAX_WIDTH) {
-                        scaleSize = MAX_WIDTH / img.width;
-                    }
-                    
-                    canvas.width = img.width * scaleSize;
-                    canvas.height = img.height * scaleSize;
-                    
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    uploadedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5); // 50% quality
-                    
-                    // Show preview
-                    const preview = document.getElementById('photo-preview');
-                    preview.src = uploadedPhotoBase64;
-                    preview.classList.remove('hidden');
-                    document.getElementById('photo-placeholder').classList.add('hidden');
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        };
-
         window.confirmDelivery = async function() {
-            if(!currentUser || !currentActiveOrder) return;
-            
+            if(!currentActiveOrder || !currentUser) return;
             const inputOtp = document.getElementById('verify-otp').value.trim().toUpperCase();
-            if(!inputOtp) {
-                showToast("Please enter OTP or Last 4 digits of Order ID.", "error");
-                return;
-            }
+            if(!inputOtp) return showToast("Enter OTP/Last 4 digits", "error");
+            if(!window.uploadedBlobs.deliveryProof) return showToast("Upload delivery photo proof", "error");
 
-            if(!uploadedPhotoBase64) {
-                showToast("Please upload a delivery proof photo.", "error");
-                return;
-            }
+            const last4 = currentActiveOrder.orderId.slice(-4).toUpperCase();
+            const expOtp = currentActiveOrder.otp ? currentActiveOrder.otp.toUpperCase() : last4;
 
-            // Validation: Check if input matches custom OTP or last 4 of Order ID
-            const last4OrderId = currentActiveOrder.orderId.slice(-4).toUpperCase();
-            const expectedOtp = currentActiveOrder.otp ? currentActiveOrder.otp.toUpperCase() : last4OrderId;
+            if(inputOtp !== expOtp && inputOtp !== last4) return showToast("Invalid OTP!", "error");
 
-            if(inputOtp !== expectedOtp && inputOtp !== last4OrderId) {
-                showToast("Invalid Verification Code!", "error");
-                return;
-            }
-
-            // Proceed to update Firestore
-            const btn = document.querySelector('#delivery-step-2 button.bg-green-500');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirming...';
+            const btn = document.getElementById('btn-confirm-delivery');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving to Cloud...';
             btn.disabled = true;
 
             try {
-                const orderDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'orders', currentActiveOrder.id);
-                await window.updateDoc(orderDocRef, {
+                // Upload Blob to Cloud Storage
+                const photoUrl = await uploadFileToCloudStorage(window.uploadedBlobs.deliveryProof, "delivery");
+                
+                // Update Firestore Document
+                await updateDoc(getDocPath('orders', currentActiveOrder.id), {
                     status: 'Delivered',
-                    deliveryPhoto: uploadedPhotoBase64,
-                    deliveredAt: window.serverTimestamp()
+                    deliveryPhotoUrl: photoUrl,
+                    deliveredAt: serverTimestamp()
                 });
 
-                showToast("Delivery Confirmed Successfully!", "success");
-                
-                // Show Success Step
+                showToast("Delivery Confirmed!", "success");
                 document.getElementById('delivery-step-2').classList.add('hidden');
                 document.getElementById('delivery-step-3').classList.remove('hidden');
-                
-            } catch (error) {
-                console.error("Update error:", error);
-                showToast("Failed to confirm delivery.", "error");
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to save delivery details", "error");
             } finally {
-                btn.innerHTML = originalText;
+                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> <span>Confirm Delivery</span>';
                 btn.disabled = false;
             }
         };
 
-
-        // --- ADMIN PORTAL LOGIC ---
         window.loginAdmin = function() {
             const pass = document.getElementById('admin-pass').value;
             if(pass === '00/8/12BA') {
@@ -526,138 +643,98 @@
                 showToast("Login Successful", "success");
                 document.getElementById('admin-pass').value = '';
                 showAdminDashboard();
-            } else {
-                showToast("Invalid Passcode", "error");
-            }
+            } else showToast("Invalid Passcode", "error");
         };
 
         window.logoutAdmin = function() {
             sessionStorage.removeItem('raf_admin_auth');
             document.getElementById('admin-dashboard').classList.add('hidden');
             document.getElementById('admin-login').classList.remove('hidden');
-            showToast("Logged out.", "info");
         };
 
         window.showAdminDashboard = function() {
             document.getElementById('admin-login').classList.add('hidden');
             document.getElementById('admin-dashboard').classList.remove('hidden');
-            loadAdminOrders();
+            loadAdminData();
         };
 
-        window.createOrder = async function() {
-            if(!currentUser) {
-                showToast("Auth error. Cannot create.", "error");
-                return;
-            }
-
-            const mobile = document.getElementById('new-mobile').value.trim();
-            const items = document.getElementById('new-items').value.trim();
-            const address = document.getElementById('new-address').value.trim();
-            const cost = document.getElementById('new-cost').value.trim();
-            let otp = document.getElementById('new-otp').value.trim().toUpperCase();
-
-            if(!mobile || !items || !address || !cost) {
-                showToast("Please fill all required fields.", "error");
-                return;
-            }
-
-            const orderId = generateOrderID();
-            
-            // If OTP is blank, let it rely on last 4 of order ID. Otherwise store custom.
-            if(!otp) {
-                otp = orderId.slice(-4);
-            }
-
-            try {
-                const ordersRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'orders');
-                await window.addDoc(ordersRef, {
-                    orderId: orderId,
-                    mobile: mobile,
-                    items: items,
-                    address: address,
-                    cost: Number(cost),
-                    otp: otp,
-                    status: 'Pending',
-                    createdAt: window.serverTimestamp()
-                });
-
-                showToast("Order Created Successfully! ID: " + orderId, "success");
-                
-                // Clear form
-                document.getElementById('new-mobile').value = '';
-                document.getElementById('new-items').value = '';
-                document.getElementById('new-address').value = '';
-                document.getElementById('new-cost').value = '';
-                document.getElementById('new-otp').value = '';
-
-                // Reload list
-                loadAdminOrders();
-            } catch (error) {
-                console.error("Create order error:", error);
-                showToast("Failed to create order.", "error");
-            }
-        };
-
-        window.loadAdminOrders = async function() {
+        window.loadAdminData = async function() {
             if(!currentUser) return;
-            const container = document.getElementById('admin-orders-list');
-            container.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
-
+            
+            // Load Products
+            const pCont = document.getElementById('admin-products-list');
+            const opCont = document.getElementById('order-product-selection');
+            pCont.innerHTML = '<p class="text-xs text-slate-400">Loading...</p>';
+            
             try {
-                const ordersRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'orders');
-                const snapshot = await getDocs(ordersRef);
+                const pSnap = await getDocs(getCollectionPath('products'));
+                currentProducts = [];
+                pSnap.forEach(d => currentProducts.push({id: d.id, ...d.data()}));
                 
-                let orders = [];
-                snapshot.forEach(doc => {
-                    orders.push({ id: doc.id, ...doc.data() });
-                });
+                if(currentProducts.length === 0) {
+                    pCont.innerHTML = '<p class="text-xs text-slate-400">No products added.</p>';
+                    opCont.innerHTML = '<p class="text-xs text-slate-400">Add products to see them here.</p>';
+                } else {
+                    pCont.innerHTML = currentProducts.map(p => `
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100 text-sm">
+                            <span>${p.name} <span class="text-green-600 font-bold">₹${p.price}</span></span>
+                            <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                    
+                    opCont.innerHTML = currentProducts.map(p => `
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="prod-checkbox rounded text-cyan-600" data-name="${p.name}" data-price="${p.price}" onchange="calculateTotal()">
+                            <span class="flex-1">${p.name}</span>
+                            <span class="text-slate-500">₹${p.price}</span>
+                        </label>
+                    `).join('');
+                }
+            } catch(e) { console.error("Error loading products", e); }
 
-                // Sort purely in memory (Newest first ideally, but we don't have perfect timestamps without serverTimestamp resolution on initial local pull, so we sort simple)
+            // Load Orders
+            const oCont = document.getElementById('admin-orders-list');
+            oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
+            
+            try {
+                const oSnap = await getDocs(getCollectionPath('orders'));
+                let orders = [];
+                oSnap.forEach(d => orders.push({id: d.id, ...d.data()}));
+                
                 orders.sort((a, b) => {
-                    // Quick sort by status: Pending first, then Delivered
                     if(a.status === 'Pending' && b.status === 'Delivered') return -1;
                     if(a.status === 'Delivered' && b.status === 'Pending') return 1;
-                    return 0;
+                    return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
                 });
 
                 if(orders.length === 0) {
-                    container.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4">No orders found.</p>';
+                    oCont.innerHTML = '<p class="text-slate-400 text-center text-sm mt-4">No orders in database.</p>';
                     return;
                 }
 
-                let html = '';
-                orders.forEach(o => {
-                    const statusColor = o.status === 'Pending' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
-                    const last4 = o.orderId.slice(-4);
-                    
-                    html += `
-                    <div class="border border-slate-100 bg-white p-3 rounded-xl shadow-sm text-sm relative">
+                oCont.innerHTML = orders.map(o => {
+                    const stColor = o.status === 'Pending' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200';
+                    const photoHtml = o.deliveryPhotoUrl ? `<div class="mt-2"><a href="${o.deliveryPhotoUrl}" target="_blank" class="text-xs text-cyan-600 hover:underline"><i class="fa-solid fa-image"></i> View Cloud Proof</a></div>` : '';
+                    return `
+                    <div class="border border-slate-200 bg-white p-4 rounded-xl shadow-sm text-sm relative">
                         <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="font-bold text-slate-700">${o.orderId}</span>
-                                <span class="text-xs text-slate-400 ml-2">Mob: ${o.mobile}</span>
-                            </div>
-                            <span class="px-2 py-1 rounded-md text-xs font-bold border ${statusColor}">${o.status}</span>
+                            <div><span class="font-bold text-slate-800">${o.orderId}</span> <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded ml-2"><i class="fa-solid fa-phone fa-xs"></i> ${o.mobile}</span></div>
+                            <span class="px-2 py-1 rounded-md text-xs font-bold border ${stColor}">${o.status}</span>
                         </div>
-                        <p class="text-slate-600 mb-1"><i class="fa-solid fa-fish fa-sm text-cyan-500 w-4"></i> ${o.items}</p>
-                        <div class="flex justify-between items-end mt-2 pt-2 border-t border-slate-50">
-                            <div>
-                                <p class="text-xs text-slate-500">OTP/Key: <span class="font-mono font-bold text-slate-700 bg-slate-100 px-1 rounded">${o.otp || last4}</span></p>
-                            </div>
-                            <span class="font-bold text-slate-800">₹${o.cost}</span>
+                        <p class="text-slate-700 mb-1 font-medium"><i class="fa-solid fa-fish fa-sm text-cyan-500 w-5"></i> ${o.items}</p>
+                        <p class="text-slate-500 text-xs mb-2"><i class="fa-solid fa-map-marker-alt fa-sm text-slate-400 w-5"></i> ${o.address}</p>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 bg-slate-50 -mx-4 -mb-4 p-3 rounded-b-xl">
+                            <p class="text-xs text-slate-500">OTP: <span class="font-mono font-bold text-slate-800 bg-white border border-slate-200 px-1.5 py-0.5 rounded">${o.otp || o.orderId.slice(-4)}</span></p>
+                            <span class="font-bold text-green-600 text-base">₹${o.cost}</span>
                         </div>
-                    </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-
-            } catch (error) {
-                console.error("Error loading admin orders:", error);
-                container.innerHTML = '<p class="text-red-500 text-center text-sm mt-4">Failed to load data.</p>';
+                        ${photoHtml}
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error("Error loading orders", e);
+                oCont.innerHTML = '<p class="text-red-500 text-center text-sm mt-4">Failed to load data from Cloud.</p>';
             }
         };
-
     </script>
 </body>
 </html>
